@@ -7,19 +7,31 @@ namespace Enes5519\CompassBar;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\event\Listener;
-use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
+use pocketmine\scheduler\TaskHandler;
 use pocketmine\utils\TextFormat;
 
 class CompassBar extends PluginBase implements Listener{
 
-	public const REFRESH_RATE = 1;
-
+	/** @var int */
+	public $refreshRate = 4;
+	/** @var TaskHandler[] */
 	protected $barTasks = [];
 
 	public function onEnable(){
+		@mkdir($this->getDataFolder());
+		$this->saveDefaultConfig();
+
+		$this->refreshRate = (int) $this->getConfig()->get("refresh-rate", 4);
+		if($this->refreshRate < 1){
+			$this->getLogger()->warning("Refresh rate property in config.yml is less than 1. Resetting to 1");
+			$this->getConfig()->set("refresh-rate", 1);
+			$this->getConfig()->save();
+			$this->refreshRate = 1;
+		}
+
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 	}
 
@@ -34,7 +46,7 @@ class CompassBar extends PluginBase implements Listener{
 		}
 
 		if(!isset($this->barTasks[$sender->getName()])){
-			$this->barTasks[$sender->getName()] = $sender->getServer()->getScheduler()->scheduleRepeatingTask(new ShowBarTask($this, $sender), self::REFRESH_RATE);
+			$this->barTasks[$sender->getName()] = $sender->getServer()->getScheduler()->scheduleRepeatingTask(new ShowBarTask($this, $sender), $this->refreshRate);
 			$sender->sendMessage(TextFormat::GREEN . "CompassBar is now on!");
 		}else{
 			$this->cancelTask($sender->getName());
@@ -53,9 +65,5 @@ class CompassBar extends PluginBase implements Listener{
 
 	public function onQuit(PlayerQuitEvent $event){
 		$this->cancelTask($event->getPlayer()->getName());
-	}
-
-	public function onJoin(PlayerJoinEvent $event){
-		$this->getServer()->dispatchCommand($event->getPlayer(), "compass");
 	}
 }
