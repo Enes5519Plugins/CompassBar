@@ -1,12 +1,17 @@
 name: CompassBar
 version: 1.0
 main: Enes5519\CompassBar\CompassBar
-api: 3.0.1
+api: [3.0.0-ALPHA11, 3.0.0-ALPHA12, 3.0.1]
 author: Enes5519
 
 commands:
   compass:
     description: Show compass on bossbar
+    permission: compassbar
     overloads:
       def:
         parameters: []
+
+permissions:
+  compassbar:
+    default: true
