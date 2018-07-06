@@ -4,33 +4,37 @@ declare(strict_types=1);
 
 namespace Enes5519\CompassBar;
 
-use pocketmine\entity\utils\Bossbar;
 use pocketmine\Player;
-use pocketmine\scheduler\PluginTask;
+use pocketmine\scheduler\Task;
 
-class ShowBarTask extends PluginTask{
+class ShowBarTask extends Task{
 
-	/** @var Player */
-	private $player;
-	/** @var Bossbar */
-	private $bossBar;
+    /** @var CompassBar */
+    private $plugin;
 
-	public function __construct(CompassBar $owner, Player $player){
-		parent::__construct($owner);
-		$this->player = $player;
-		$this->bossBar = new Bossbar();
-		$this->bossBar->setHealthPercent(1.0, 1.0);
-		$this->bossBar->showTo($player);
-	}
+    public function __construct(CompassBar $plugin){
+        $this->plugin = $plugin;
+    }
 
-	public function onRun(int $currentTick){
-		assert(!$this->player->isClosed());
-		$this->bossBar->setTitle(Utils::getCompass($this->player->getYaw()));
-		$this->bossBar->updateFor($this->player);
-	}
+    public function onRun(int $currentTick){
+        $bossBar = $this->plugin->getBossBar();
+        /** @var Player $viewer */
+        foreach($bossBar->getViewers() as $viewer){
+            if(!$viewer->isClosed()){
+                $bossBar->setTitle(Utils::getCompass($viewer->yaw));
+                $bossBar->updateFor($viewer);
+            }else{
+                $viewer->removeBossbar(CompassBar::BOSSBAR_ID);
+            }
+        }
+    }
 
-	public function onCancel(){
-		$this->bossBar->hideFrom($this->player);
-	}
+    public function onCancel(){
+        $bossBar = $this->plugin->getBossBar();
+        /** @var Player $viewer */
+        foreach($bossBar->getViewers() as $viewer){
+            $viewer->removeBossbar(CompassBar::BOSSBAR_ID);
+        }
+    }
 
 }

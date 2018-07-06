@@ -6,6 +6,7 @@ namespace Enes5519\CompassBar;
 
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\entity\utils\Bossbar;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\Player;
@@ -15,55 +16,58 @@ use pocketmine\utils\TextFormat;
 
 class CompassBar extends PluginBase implements Listener{
 
-	/** @var int */
-	public $refreshRate = 4;
-	/** @var TaskHandler[] */
-	protected $barTasks = [];
+    public const BOSSBAR_ID = 500;
 
-	public function onEnable(){
-		@mkdir($this->getDataFolder());
-		$this->saveDefaultConfig();
+    /** @var int */
+    public $refreshRate = 4;
+    /** @var TaskHandler[] */
+    protected $barTasks = [];
+    /** @var Bossbar */
+    protected $bossBar;
 
-		$this->refreshRate = (int) $this->getConfig()->get("refresh-rate", 4);
-		if($this->refreshRate < 1){
-			$this->getLogger()->warning("Refresh rate property in config.yml is less than 1. Resetting to 1");
-			$this->getConfig()->set("refresh-rate", 1);
-			$this->getConfig()->save();
-			$this->refreshRate = 1;
-		}
+    public function onEnable(){
+        @mkdir($this->getDataFolder());
+        $this->saveDefaultConfig();
 
-		$this->getServer()->getPluginManager()->registerEvents($this, $this);
-	}
+        $this->refreshRate = (int) $this->getConfig()->get("refresh-rate", 4);
+        if($this->refreshRate < 1){
+            $this->getLogger()->warning("Refresh rate property in config.yml is less than 1. Resetting to 1");
+            $this->getConfig()->set("refresh-rate", 1);
+            $this->getConfig()->save();
+            $this->refreshRate = 1;
+        }
 
-	public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
-		if(!$command->testPermission($sender)){
-			return true;
-		}
+        Utils::init();
+        $this->bossBar = new Bossbar("Loading Compass Bar");
+        $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getScheduler()->scheduleRepeatingTask(new ShowBarTask($this), $this->refreshRate);
+    }
 
-		if(!($sender instanceof Player)){
-			$sender->sendMessage(TextFormat::RED . "You can use this command in the game.");
-			return true;
-		}
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
+        if(!($sender instanceof Player)){
+            $sender->sendMessage(TextFormat::RED . "You can use this command in the game.");
+            return true;
+        }
 
-		if(!isset($this->barTasks[$sender->getName()])){
-			$this->barTasks[$sender->getName()] = $sender->getServer()->getScheduler()->scheduleRepeatingTask(new ShowBarTask($this, $sender), $this->refreshRate);
-			$sender->sendMessage(TextFormat::GREEN . "CompassBar is now on!");
-		}else{
-			$this->cancelTask($sender->getName());
-			$sender->sendMessage(TextFormat::RED . "CompassBar is now off.");
-		}
+        if($sender->getBossbar(self::BOSSBAR_ID) == null){
+            $sender->addBossbar($this->bossBar, self::BOSSBAR_ID);
+            $sender->sendMessage(TextFormat::GREEN . "CompassBar is now on!");
+        }else{
+            $sender->removeBossbar(self::BOSSBAR_ID);
+            $sender->sendMessage(TextFormat::RED . "CompassBar is now off.");
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	private function cancelTask(string $p){
-		if(isset($this->barTasks[$p])){
-			$this->getServer()->getScheduler()->cancelTask($this->barTasks[$p]->getTaskId());
-			unset($this->barTasks[$p]);
-		}
-	}
+    /**
+     * @return Bossbar
+     */
+    public function getBossBar() : Bossbar{
+        return $this->bossBar;
+    }
 
-	public function onQuit(PlayerQuitEvent $event){
-		$this->cancelTask($event->getPlayer()->getName());
-	}
+    public function onQuit(PlayerQuitEvent $event){
+        $event->getPlayer()->removeBossbar(self::BOSSBAR_ID);
+    }
 }
