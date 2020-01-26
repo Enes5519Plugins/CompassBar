@@ -51,7 +51,7 @@ class CompassBar extends PluginBase implements Listener{
 			return true;
 		}
 
-		if($args[0] === "off")){
+		if($args[0] === "off"){
 			$this->removeBossBar($sender);
 			$sender->sendMessage(TextFormat::RED . "CompassBar is now off.");
 		}else{
