@@ -51,9 +51,10 @@ class CompassBar extends PluginBase implements Listener{
 			return true;
 		}
 
-		if($args[0] === "off"){
+		if(isset($this->enabled[$sender->getLowerCaseName()])){
 			$this->removeBossBar($sender);
 			$sender->sendMessage(TextFormat::RED . "CompassBar is now off.");
+                        unset($this->enabled[$sender->getLowerCaseName()]);
 		}else{
 			$this->enabled[$sender->getLowerCaseName()] = $sender;
 
