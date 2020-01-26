@@ -44,6 +44,7 @@ class CompassBar extends PluginBase implements Listener{
 		$this->getScheduler()->scheduleRepeatingTask(new ShowBarTask($this), $refreshRate);
 	}
 
+
 	public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
 		if(!($sender instanceof Player)){
 			$sender->sendMessage(TextFormat::RED . "You can use this command in the game.");
