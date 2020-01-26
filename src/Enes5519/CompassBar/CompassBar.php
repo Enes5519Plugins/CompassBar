@@ -31,7 +31,8 @@ class CompassBar extends PluginBase implements Listener{
 
 		$this->saveDefaultConfig();
 
-		$refreshRate = (int) $this->getConfig()->get("refresh-rate", 4);
+		//$refreshRate = (int) $this->getConfig()->get("refresh-rate", 4);
+		$refreshRate = 1;
 		if($refreshRate < 1){
 			$this->getLogger()->warning("Refresh rate property in config.yml is less than 1. Resetting to 1");
 			$this->getConfig()->set("refresh-rate", 1);
