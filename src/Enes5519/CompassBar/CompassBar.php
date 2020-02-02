@@ -54,24 +54,27 @@ class CompassBar extends PluginBase implements Listener{
 			$this->removeBossBar($sender);
 			$sender->sendMessage(TextFormat::RED . "CompassBar is now off.");
 		}else{
-			$this->enabled[$sender->getLowerCaseName()] = $sender;
-
-			$pk = new AddActorPacket();
-			$pk->entityRuntimeId = $this->entityId;
-			$pk->type = EntityIds::SLIME;
-			$pk->metadata = [
-				Entity::DATA_FLAGS => [Entity::DATA_TYPE_LONG, ((1 << Entity::DATA_FLAG_INVISIBLE) | (1 << Entity::DATA_FLAG_IMMOBILE))],
-				Entity::DATA_NAMETAG => [Entity::DATA_TYPE_STRING, '']
-			];
-			$pk->position = new Vector3();
-			$sender->sendDataPacket($pk);
-
-			$this->sendBossPacket($sender, '', BossEventPacket::TYPE_SHOW);
-
+			$this->addBossBar($sender);
 			$sender->sendMessage(TextFormat::GREEN . "CompassBar is now on!");
 		}
 
 		return true;
+	}
+
+	public function addBossBar(Player $player) : void{
+		$pk = new AddActorPacket();
+		$pk->entityRuntimeId = $this->entityId;
+		$pk->type = EntityIds::SLIME;
+		$pk->metadata = [
+			Entity::DATA_FLAGS => [Entity::DATA_TYPE_LONG, ((1 << Entity::DATA_FLAG_INVISIBLE) | (1 << Entity::DATA_FLAG_IMMOBILE))],
+			Entity::DATA_NAMETAG => [Entity::DATA_TYPE_STRING, '']
+		];
+		$pk->position = new Vector3();
+		$player->sendDataPacket($pk);
+
+		$this->sendBossPacket($player, '', BossEventPacket::TYPE_SHOW);
+
+		$this->enabled[$player->getLowerCaseName()] = $player;
 	}
 
 	public function removeBossBar(Player $player) : void{
@@ -80,6 +83,8 @@ class CompassBar extends PluginBase implements Listener{
 		$pk = new RemoveActorPacket();
 		$pk->entityUniqueId = $this->entityId;
 		$player->sendDataPacket($pk);
+
+		unset($this->enabled[$player->getLowerCaseName()]);
 	}
 
 	public function onQuit(PlayerQuitEvent $event){
